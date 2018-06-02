@@ -13,7 +13,12 @@ $(function () {
     var orbMap = ["火", "水", "木", "光", "暗", "心"];
     var orb = new Array();
 
+    var steps;
+
     var enable_drop = false;
+
+    var combo = 0;
+    var total_combo = 0;
 
     var plane_attr = [
         [3, 1, 5, 2, 2, 2],
@@ -38,20 +43,22 @@ $(function () {
             plane[i][j] = new Plane(plane_attr[i][j],false,i,j);
         }
     }
+    //retry記錄用
+    var history_plane = _.cloneDeep(plane);
 
     function sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
       }
 
     function RandomGeneratePlane() {
-        $("#combo_text").text("combo:0");
         do{
             for (var i = 0; i < 5; i++){
                 for (var j = 0; j < 6; j++){
                     plane[i][j].attr = Math.floor(Math.random() * 6 + 1);
                 }
             }
-        }while(check_combo(plane));
+        } while (check_combo(plane));
+        history_plane = _.cloneDeep(plane);
     }
 
     function orbOnload() {
@@ -69,6 +76,8 @@ $(function () {
             temp = plane[j1][i1].attr;
             plane[j1][i1].attr = plane[j2][i2].attr;
             plane[j2][i2].attr = temp;
+            steps++;
+            $("#steps_text").text("steps:" + steps);
         }
     }
 
@@ -90,6 +99,10 @@ $(function () {
         targetOrbPos = [Math.floor((start_x - 2) / 84), Math.floor((start_y - 1) / 84)];
         targetOrbNum = plane[targetOrbPos[1]][targetOrbPos[0]].attr;
         mouseDown = true;
+        total_combo = 0;
+        $("#combo_text").text("combo:0");
+        steps = 0;
+        $("#steps_text").text("steps:" + steps);
     }
 
     function onMouseMove(evt) {
@@ -110,6 +123,8 @@ $(function () {
     function onMouseUp(evt) {
         if (mouseDown === true) {
             mouseDown = false;
+            //disable click events
+            $("#simulator").parent().css("pointer-events", "none");
             end_x = evt.pageX - cvs.offsetLeft;
             end_y = evt.pageY - cvs.offsetTop;
             targetOrbPos = [Math.floor((end_x - 2) / 84), Math.floor((end_y - 1) / 84)];
@@ -118,6 +133,8 @@ $(function () {
             ctx.drawImage(orb[targetOrbNum - 1], BG_x_coor[targetOrbPos[0]], BG_y_coor[targetOrbPos[1]], 80, 80);
 
             puzzle_elim(plane);
+            //enable click events
+
         }
     }
 
@@ -147,8 +164,6 @@ $(function () {
     }
 
     async function puzzle_elim(plane) {
-        var combo = 0;
-        var total_combo = 0;
         do {
             combo = 0;
             for (var i = 0; i < 5; i++){
@@ -198,8 +213,12 @@ $(function () {
             }
 
         } while (combo != 0);
+        $("#simulator").parent().css("pointer-events", "auto");
     }
 
+    function reset_all() {
+        
+    }
 
 
 
@@ -229,14 +248,20 @@ $(function () {
         drawOrb(true);
     });
 
-    $("#enableDrop").on("click",function(){
-        if($("#enableDrop").hasClass('active')){
+    $("#enableDrop").on("click", function () {
+        if ($("#enableDrop").hasClass('active')) {
             enable_drop = false;
         }
-        else{
+        else {
             enable_drop = true;
         }
-    })
+    });
+    $("#retry").on("click", function () {
+        plane = _.cloneDeep(history_plane);
+        ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+        drawOrb(true);
+    });
+
 
 
 });
