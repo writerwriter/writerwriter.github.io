@@ -4,7 +4,8 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
+    <!-- format CSS -->
+    <link rel="stylesheet" href="css/format.css">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
@@ -33,14 +34,18 @@
         </div>
       </nav>
     <div>
-      <canvas id="simulator" width="500" height="420" style="border:1px solid pink;"></canvas>
-      <h1 class="text-primary" id="combo_text">combo:0</h1>
-      <h1 class="text-info" id="steps_text">steps:0</h1>
+      <canvas id="simulator" width="500" height="420" style="border:1px solid pink;display:inline;"></canvas>
+      <canvas id="chooseOrb" width="168" height="420" style="margin-left:20px; display:none;"></canvas>
+      <div>
+        <h1 class="text-primary inline" id="combo_text">combo:0</h1>
+        <h1 class="text-info inline" id="steps_text">steps:0</h1>
+      </div>
     </div>
     <div>
       <button type="submit" class="btn btn-outline-success" id="randomGeneratePlane">Random Generate</button>
       <button type="submit" class="btn btn-outline-success" id="retry">Retry</button>
       <button type="submit" class="btn btn-outline-danger" data-toggle="button" id="enableDrop">Enable Drop</button>
+      <button type="submit" class="btn btn-outline-danger" data-toggle="button" id="editMode">Edit Mode</button>
     </div>
 
     <!-- Optional JavaScript -->

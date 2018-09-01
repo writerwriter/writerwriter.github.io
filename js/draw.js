@@ -3,6 +3,9 @@ $(function () {
     var cvs = $("#simulator")[0];
     var ctx = cvs.getContext("2d");
 
+    var cvs_choose_orb = $("#chooseOrb")[0];
+    var ctx_choose_orb = cvs_choose_orb.getContext("2d");
+
     var mouseDown = false;
     var targetOrbPos = [0, 0];
     var targetOrbNum = 0;
@@ -16,9 +19,12 @@ $(function () {
     var steps;
 
     var enable_drop = false;
+    var edit_mode = false;
 
     var combo = 0;
     var total_combo = 0;
+
+    var edit_orb = 1;
 
     var plane_attr = [
         [3, 1, 5, 2, 2, 2],
@@ -69,6 +75,7 @@ $(function () {
                 }
             }
         }
+        ctx_choose_orb.drawImage(this, BG_x_coor[Math.floor((this.number - 1) / 5)], BG_y_coor[(this.number - 1) % 5], 80, 80);
     };
 
     function swap(i1, j1, i2, j2) {
@@ -94,47 +101,83 @@ $(function () {
     }
 
     function onMouseDown(evt) {
-        start_x = evt.pageX - cvs.offsetLeft;
-        start_y = evt.pageY - cvs.offsetTop;
-        targetOrbPos = [Math.floor((start_x - 2) / 84), Math.floor((start_y - 1) / 84)];
-        targetOrbNum = plane[targetOrbPos[1]][targetOrbPos[0]].attr;
-        mouseDown = true;
-        total_combo = 0;
-        $("#combo_text").text("combo:0");
-        steps = 0;
-        $("#steps_text").text("steps:" + steps);
+        if (edit_mode === false) {
+            start_x = evt.pageX - cvs.offsetLeft;
+            start_y = evt.pageY - cvs.offsetTop;
+            targetOrbPos = [Math.floor((start_x - 2) / 84), Math.floor((start_y - 1) / 84)];
+            targetOrbNum = plane[targetOrbPos[1]][targetOrbPos[0]].attr;
+            mouseDown = true;
+            total_combo = 0;
+            $("#combo_text").text("combo:0");
+            steps = 0;
+            $("#steps_text").text("steps:" + steps);
+        }
     }
 
     function onMouseMove(evt) {
-        if (mouseDown === true) {
-            start_x = evt.pageX - cvs.offsetLeft;
-            start_y = evt.pageY - cvs.offsetTop;
-            currentPos = [Math.floor((start_x - 2) / 84), Math.floor((start_y - 1) / 84)];
-            if (currentPos[0] != targetOrbPos[0] || currentPos[1] != targetOrbPos[1]) {
-                swap(currentPos[0], currentPos[1], targetOrbPos[0], targetOrbPos[1]);
-                targetOrbPos = currentPos;
+        if (edit_mode === false) {
+            if (mouseDown === true) {
+                start_x = evt.pageX - cvs.offsetLeft;
+                start_y = evt.pageY - cvs.offsetTop;
+                currentPos = [Math.floor((start_x - 2) / 84), Math.floor((start_y - 1) / 84)];
+                if (currentPos[0] != targetOrbPos[0] || currentPos[1] != targetOrbPos[1]) {
+                    swap(currentPos[0], currentPos[1], targetOrbPos[0], targetOrbPos[1]);
+                    targetOrbPos = currentPos;
+                }
+                ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+                drawOrb(false);
+                ctx.drawImage(orb[targetOrbNum - 1], start_x - 40, start_y - 40, 80, 80);
             }
-            ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
-            drawOrb(false);
-            ctx.drawImage(orb[targetOrbNum - 1], start_x - 40, start_y - 40, 80, 80);
         }
     }
 
     function onMouseUp(evt) {
-        if (mouseDown === true) {
-            mouseDown = false;
-            //disable click events
-            $("#simulator").parent().css("pointer-events", "none");
+        if (edit_mode === false) {
+            if (mouseDown === true) {
+                mouseDown = false;
+                //disable click events
+                $("#simulator").parent().css("pointer-events", "none");
+                end_x = evt.pageX - cvs.offsetLeft;
+                end_y = evt.pageY - cvs.offsetTop;
+                targetOrbPos = [Math.floor((end_x - 2) / 84), Math.floor((end_y - 1) / 84)];
+                ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+                drawOrb(false);
+                ctx.drawImage(orb[targetOrbNum - 1], BG_x_coor[targetOrbPos[0]], BG_y_coor[targetOrbPos[1]], 80, 80);
+
+                puzzle_elim(plane);
+                //enable click events
+            }
+        }
+    }
+
+    function onMouseClick(evt) {
+        if (edit_mode === true) {
             end_x = evt.pageX - cvs.offsetLeft;
             end_y = evt.pageY - cvs.offsetTop;
             targetOrbPos = [Math.floor((end_x - 2) / 84), Math.floor((end_y - 1) / 84)];
+            plane[targetOrbPos[1]][targetOrbPos[0]].attr = edit_orb;
             ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
-            drawOrb(false);
-            ctx.drawImage(orb[targetOrbNum - 1], BG_x_coor[targetOrbPos[0]], BG_y_coor[targetOrbPos[1]], 80, 80);
+            drawOrb(true);
+        }
+    }
 
-            puzzle_elim(plane);
-            //enable click events
-
+    function onMouseClickChooseOrb(evt) {
+        if (edit_mode === true) {
+            ctx_choose_orb.clearRect(0, 0, cvs_choose_orb.width, cvs_choose_orb.height);
+            for (var i = 0; i < 6; i++) {
+                ctx_choose_orb.drawImage(orb[i], BG_x_coor[Math.floor((orb[i].number - 1) / 5)], BG_y_coor[(orb[i].number - 1) % 5], 80, 80);
+            }
+            end_x = evt.pageX - cvs_choose_orb.offsetLeft;
+            end_y = evt.pageY - cvs_choose_orb.offsetTop;
+            targetOrbPos = [Math.floor((end_x - 2) / 84), Math.floor((end_y - 1) / 84)];
+            if (targetOrbPos[0] * 5 + targetOrbPos[1] + 1 <= 6) {
+                edit_orb = targetOrbPos[0] * 5 + targetOrbPos[1] + 1;
+            }
+            ctx_choose_orb.beginPath();
+            ctx_choose_orb.lineWidth = "0.5px";
+            ctx_choose_orb.strokeStyle = "black";
+            ctx_choose_orb.rect(84 * Math.floor((edit_orb - 1) / 5) + 1, (edit_orb - 1) % 5 * 84 + 1, 82, 82);
+            ctx_choose_orb.stroke();
         }
     }
 
@@ -236,11 +279,15 @@ $(function () {
     for (var i = 0; i < 6; i++){
         orb[i].onload = orbOnload;
     }
+
     //add event listener
     cvs.addEventListener('mousedown', onMouseDown);
     cvs.addEventListener('mousemove', onMouseMove);
     cvs.addEventListener('mouseup', onMouseUp);
     cvs.addEventListener('mouseout', onMouseUp);
+    cvs.addEventListener('click', onMouseClick);
+
+    cvs_choose_orb.addEventListener('click', onMouseClickChooseOrb);
     
     $("#randomGeneratePlane").on("click", function () {
         RandomGeneratePlane();
@@ -261,7 +308,16 @@ $(function () {
         ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
         drawOrb(true);
     });
-
+    $("#editMode").on("click", function () {
+        if ($("#editMode").hasClass('active')) {
+            edit_mode = false;
+            $("#chooseOrb").hide();
+        }
+        else {
+            edit_mode = true;
+            $("#chooseOrb").show();
+        }
+    })
 
 
 });
