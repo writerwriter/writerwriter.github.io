@@ -158,6 +158,7 @@ $(function () {
             plane[targetOrbPos[1]][targetOrbPos[0]].attr = edit_orb;
             ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
             drawOrb(true);
+            history_plane = _.cloneDeep(plane);
         }
     }
 
