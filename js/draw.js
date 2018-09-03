@@ -17,21 +17,27 @@ $(function () {
     var orb = new Array();
 
     var steps;
+    var path = "";
+    //0:右 1:右上 2:上 3:左上 4:左 5:左下 6:下 7:右下
+    var startPos = [0, 0];
 
     var enable_drop = false;
     var edit_mode = false;
+    var enable_waiting = true;
 
     var combo = 0;
     var total_combo = 0;
 
     var edit_orb = 1;
 
+    var raw_path_data_with_plane;
+
     var plane_attr = [
-        [3, 1, 5, 2, 2, 2],
-        [1, 1, 1, 3, 1, 1],
-        [3, 1, 5, 1, 4, 6],
-        [3, 4, 5, 1, 4, 6],
-        [6, 6, 6, 1, 3, 6]
+        [3, 5, 5, 1, 4, 2],
+        [3, 2, 2, 5, 4, 2],
+        [4, 4, 4, 6, 1, 1],
+        [3, 5, 5, 2, 4, 2],
+        [1, 1, 1, 5, 6, 6]
     ];
 
     function Plane(attr, visited, pos_x, pos_y) {
@@ -100,17 +106,139 @@ $(function () {
         }
     }
 
+    async function onReplay() {
+        if (edit_mode === false && path !== "") {
+            //disable click events
+            $("#simulator").parent().css("pointer-events", "none");
+
+            steps = 0;
+
+            targetOrbPos[0] = startPos[0];
+            targetOrbPos[1] = startPos[1];
+            
+            //recreate plane
+            plane = _.cloneDeep(history_plane);
+            ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+            drawOrb(true);
+
+            enable_waiting = false;
+            await sleep(500);
+            enable_waiting = true;
+            
+            for (var i = 0; i < path.length; i++){
+                switch (path.charAt(i)) {
+                    case "0":
+                        swap(targetOrbPos[0], targetOrbPos[1], targetOrbPos[0] + 1, targetOrbPos[1]);
+                        targetOrbPos[0] += 1;
+                        ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+                        drawOrb(false);
+                        ctx.save();
+                        ctx.globalAlpha = 0.5;
+                        ctx.drawImage(orb[targetOrbNum - 1], targetOrbPos[0] * 84 + 2, targetOrbPos[1] * 84 + 1, 80, 80);
+                        ctx.restore();
+                        await sleep(200);
+                        break;
+                    case "1":
+                        swap(targetOrbPos[0], targetOrbPos[1], targetOrbPos[0] + 1, targetOrbPos[1] - 1);
+                        targetOrbPos[0] += 1;
+                        targetOrbPos[1] -= 1;
+                        ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+                        drawOrb(false);
+                        ctx.save();
+                        ctx.globalAlpha = 0.5;
+                        ctx.drawImage(orb[targetOrbNum - 1], targetOrbPos[0] * 84 + 2, targetOrbPos[1] * 84 + 1, 80, 80);
+                        ctx.restore();
+                        await sleep(200);
+                        break;
+                    case "2":
+                        swap(targetOrbPos[0], targetOrbPos[1], targetOrbPos[0], targetOrbPos[1] - 1);
+                        targetOrbPos[1] -= 1;
+                        ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+                        drawOrb(false);
+                        ctx.save();
+                        ctx.globalAlpha = 0.5;
+                        ctx.drawImage(orb[targetOrbNum - 1], targetOrbPos[0] * 84 + 2, targetOrbPos[1] * 84 + 1, 80, 80);
+                        ctx.restore();
+                        await sleep(200);
+                        break;
+                    case "3":
+                        swap(targetOrbPos[0], targetOrbPos[1], targetOrbPos[0] - 1, targetOrbPos[1] - 1);
+                        targetOrbPos[0] -= 1;
+                        targetOrbPos[1] -= 1;
+                        ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+                        drawOrb(false);
+                        ctx.save();
+                        ctx.globalAlpha = 0.5;
+                        ctx.drawImage(orb[targetOrbNum - 1], targetOrbPos[0] * 84 + 2, targetOrbPos[1] * 84 + 1, 80, 80);
+                        ctx.restore();
+                        await sleep(200);
+                        break;
+                    case "4":
+                        swap(targetOrbPos[0], targetOrbPos[1], targetOrbPos[0] - 1, targetOrbPos[1]);
+                        targetOrbPos[0] -= 1;
+                        ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+                        drawOrb(false);
+                        ctx.save();
+                        ctx.globalAlpha = 0.5;
+                        ctx.drawImage(orb[targetOrbNum - 1], targetOrbPos[0] * 84 + 2, targetOrbPos[1] * 84 + 1, 80, 80);
+                        ctx.restore();
+                        await sleep(200);
+                        break;
+                    case "5":
+                        swap(targetOrbPos[0], targetOrbPos[1], targetOrbPos[0] - 1, targetOrbPos[1] + 1);
+                        targetOrbPos[0] -= 1;
+                        targetOrbPos[1] += 1;
+                        ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+                        drawOrb(false);
+                        ctx.save();
+                        ctx.globalAlpha = 0.5;
+                        ctx.drawImage(orb[targetOrbNum - 1], targetOrbPos[0] * 84 + 2, targetOrbPos[1] * 84 + 1, 80, 80);
+                        ctx.restore();
+                        await sleep(200);
+                        break;
+                    case "6":
+                        swap(targetOrbPos[0], targetOrbPos[1], targetOrbPos[0], targetOrbPos[1] + 1);
+                        targetOrbPos[1] += 1;
+                        ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+                        drawOrb(false);
+                        ctx.save();
+                        ctx.globalAlpha = 0.5;
+                        ctx.drawImage(orb[targetOrbNum - 1], targetOrbPos[0] * 84 + 2, targetOrbPos[1] * 84 + 1, 80, 80);
+                        ctx.restore();
+                        await sleep(200);
+                        break;
+                    case "7":
+                        swap(targetOrbPos[0], targetOrbPos[1], targetOrbPos[0] + 1, targetOrbPos[1] + 1);
+                        targetOrbPos[0] += 1;
+                        targetOrbPos[1] += 1;
+                        ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+                        drawOrb(false);
+                        ctx.save();
+                        ctx.globalAlpha = 0.5;
+                        ctx.drawImage(orb[targetOrbNum - 1], targetOrbPos[0] * 84 + 2, targetOrbPos[1] * 84 + 1, 80, 80);
+                        ctx.restore();
+                        await sleep(200);
+                        break;
+                }
+            }
+            $("#simulator").parent().css("pointer-events", "auto");
+        }
+    }
+
     function onMouseDown(evt) {
         if (edit_mode === false) {
             start_x = evt.pageX - cvs.offsetLeft;
             start_y = evt.pageY - cvs.offsetTop;
             targetOrbPos = [Math.floor((start_x - 2) / 84), Math.floor((start_y - 1) / 84)];
+            startPos = targetOrbPos;
             targetOrbNum = plane[targetOrbPos[1]][targetOrbPos[0]].attr;
             mouseDown = true;
             total_combo = 0;
             $("#combo_text").text("combo:0");
             steps = 0;
             $("#steps_text").text("steps:" + steps);
+            //clear last path.
+            path = "";
         }
     }
 
@@ -121,6 +249,36 @@ $(function () {
                 start_y = evt.pageY - cvs.offsetTop;
                 currentPos = [Math.floor((start_x - 2) / 84), Math.floor((start_y - 1) / 84)];
                 if (currentPos[0] != targetOrbPos[0] || currentPos[1] != targetOrbPos[1]) {
+                    //x*3+y
+                    switch ((currentPos[0]-targetOrbPos[0])*3+(currentPos[1]-targetOrbPos[1])) {
+                        case 3:
+                            path += "0";
+                            break;
+                        case 4:
+                            path += "7";
+                            break;
+                        case 1:
+                            path += "6";
+                            break;
+                        case -2:
+                            path += "5";
+                            break;
+                        case -3:
+                            path += "4";
+                            break;
+                        case -4:
+                            path += "3";
+                            break;
+                        case -1:
+                            path += "2";
+                            break;
+                        case 2:
+                            path += "1";
+                            break;
+                        default:
+                            alert("Error. You are not allow to CHEAT...");
+                            break;
+                    }
                     swap(currentPos[0], currentPos[1], targetOrbPos[0], targetOrbPos[1]);
                     targetOrbPos = currentPos;
                 }
@@ -137,6 +295,14 @@ $(function () {
                 mouseDown = false;
                 //disable click events
                 $("#simulator").parent().css("pointer-events", "none");
+                //copy path to final encode
+                raw_path_data_with_plane = path;
+                for (var i = 4; i >=0; i--) {
+                    for (var j = 5; j >=0; j--) {
+                        raw_path_data_with_plane = history_plane[i][j].attr.toString() + raw_path_data_with_plane;
+                    }
+                }
+
                 end_x = evt.pageX - cvs.offsetLeft;
                 end_y = evt.pageY - cvs.offsetTop;
                 targetOrbPos = [Math.floor((end_x - 2) / 84), Math.floor((end_y - 1) / 84)];
@@ -221,8 +387,10 @@ $(function () {
                         drawOrb(true);
                         combo++;
                         total_combo++;
-                        $("#combo_text").text( "combo:" + total_combo);
-                        await sleep(500);
+                        $("#combo_text").text("combo:" + total_combo);
+                        if (enable_waiting) {
+                            await sleep(500);
+                        }
                     }
                     else if (i + 2 < 5 && !plane[i][j].visited && plane[i][j].attr !== 0 && plane[i][j].attr === plane[i + 1][j].attr && plane[i][j].attr === plane[i + 2][j].attr) {
                         var delete_combo_handle = new Array();
@@ -233,21 +401,27 @@ $(function () {
                         drawOrb(true);
                         combo++;
                         total_combo++;
-                        $("#combo_text").text( "combo:" + total_combo);
-                        await sleep(500);
+                        $("#combo_text").text("combo:" + total_combo);
+                        if (enable_waiting) {
+                            await sleep(500);
+                        }
                     }
                 }
             }
             plane = Drop(plane);
             ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
             drawOrb(true);
-            await sleep(500);
+            if (enable_waiting) {
+                await sleep(500);
+            }
 
             if(enable_drop){
                 plane = generate_drop(plane);
                 ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
                 drawOrb(true);
-                await sleep(500);
+                if (enable_waiting) {
+                    await sleep(500);
+                }
             }
 
             for (var i = 0; i < 5; i++){
@@ -259,12 +433,6 @@ $(function () {
         } while (combo != 0);
         $("#simulator").parent().css("pointer-events", "auto");
     }
-
-    function reset_all() {
-        
-    }
-
-
 
     //setting src
     BG.src = "../img/轉珠盤面.png";
@@ -290,6 +458,8 @@ $(function () {
 
     cvs_choose_orb.addEventListener('click', onMouseClickChooseOrb);
     
+    $("#replay").on("click", onReplay);
+
     $("#randomGeneratePlane").on("click", function () {
         RandomGeneratePlane();
         ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
@@ -304,10 +474,13 @@ $(function () {
             enable_drop = true;
         }
     });
-    $("#retry").on("click", function () {
+    $("#retry").on("click", async function () {
         plane = _.cloneDeep(history_plane);
         ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
         drawOrb(true);
+        enable_waiting = false;
+        await sleep(500); //wait enough time to let the puzzle_elim done its work.
+        enable_waiting = true;
     });
     $("#editMode").on("click", function () {
         if ($("#editMode").hasClass('active')) {
@@ -320,5 +493,23 @@ $(function () {
         }
     })
 
+    $("#copyPath").on("click", function () {
+        //alert(raw_path_data_with_plane);
+        $("#planeCode").val(raw_path_data_with_plane);
+        $("#planeCode").select();
+        document.execCommand("Copy");
+    })
+    $("#createPlane").on("click", function () {
+        var planeCode = $("#planeCode").val();
+        for (var i = 0; i < 5; i++){
+            for (var j = 0; j < 6; j++){
+                plane[i][j].attr = Number(planeCode[i * 6 + j]);
+            }
+        }
+        history_plane = _.cloneDeep(plane);
+        ctx.drawImage(BG, 0, 0, cvs.width, cvs.height);
+        drawOrb(true);
+        path = planeCode.slice(30);
+    })
 
 });
